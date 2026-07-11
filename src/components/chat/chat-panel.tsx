@@ -58,6 +58,44 @@ function summarizeMemberNames(members: Tables<"profiles">[]) {
   } more`;
 }
 
+function sortMessages(messages: MessageRow[]) {
+  return [...messages].sort(
+    (firstMessage, secondMessage) =>
+      Date.parse(firstMessage.created_at) - Date.parse(secondMessage.created_at),
+  );
+}
+
+function mergeMessage(currentMessages: MessageRow[], nextMessage: MessageRow) {
+  const existingIndex = currentMessages.findIndex(
+    (message) => message.id === nextMessage.id,
+  );
+
+  if (existingIndex >= 0) {
+    return sortMessages(
+      currentMessages.map((message, index) =>
+        index === existingIndex ? nextMessage : message,
+      ),
+    );
+  }
+
+  const optimisticIndex = currentMessages.findIndex(
+    (message) =>
+      message.id.startsWith("optimistic-message") &&
+      message.sender_id === nextMessage.sender_id &&
+      message.content === nextMessage.content,
+  );
+
+  if (optimisticIndex >= 0) {
+    return sortMessages(
+      currentMessages.map((message, index) =>
+        index === optimisticIndex ? nextMessage : message,
+      ),
+    );
+  }
+
+  return sortMessages([...currentMessages, nextMessage]);
+}
+
 export function ChatPanel({
   couple,
   members,
@@ -95,7 +133,67 @@ export function ChatPanel({
     channel: `messages:${couple?.id ?? "solo"}`,
     tables: ["messages"],
     filter: couple?.id ? `couple_id=eq.${couple.id}` : undefined,
+    pollMs: 3000,
   });
+
+  useEffect(() => {
+    if (!couple?.id || !supabase) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(`live-chat:${couple.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `couple_id=eq.${couple.id}`,
+        },
+        (payload) => {
+          setLiveMessages((currentMessages) =>
+            mergeMessage(currentMessages, payload.new as MessageRow),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `couple_id=eq.${couple.id}`,
+        },
+        (payload) => {
+          setLiveMessages((currentMessages) =>
+            mergeMessage(currentMessages, payload.new as MessageRow),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+          filter: `couple_id=eq.${couple.id}`,
+        },
+        (payload) => {
+          const deletedMessage = payload.old as Partial<MessageRow>;
+
+          setLiveMessages((currentMessages) =>
+            currentMessages.filter((message) => message.id !== deletedMessage.id),
+          );
+        },
+      );
+
+    channel.subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [couple?.id, supabase]);
 
   const hasUnreadIncomingMessages = liveMessages.some(
     (message) =>

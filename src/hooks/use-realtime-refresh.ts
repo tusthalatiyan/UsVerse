@@ -13,6 +13,7 @@ export function useRealtimeRefresh(input: {
   channel: string;
   tables: TableName[];
   filter?: string;
+  pollMs?: number;
 }) {
   const router = useRouter();
   const supabase = useOptionalSupabase();
@@ -59,4 +60,20 @@ export function useRealtimeRefresh(input: {
       void supabase.removeChannel(channel);
     };
   }, [input.channel, input.enabled, input.filter, input.tables, router, startTransition, supabase]);
+
+  useEffect(() => {
+    if (input.enabled === false || !input.pollMs) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      startTransition(() => {
+        router.refresh();
+      });
+    }, input.pollMs);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [input.enabled, input.pollMs, router, startTransition]);
 }

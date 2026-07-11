@@ -55,12 +55,18 @@ export async function getViewerContext(): Promise<ViewerContext | null> {
 
   const members = couple
     ? (
+        await supabase.rpc("get_space_members", {
+          user_id_input: user.id,
+        })
+      ).data ??
+      (
         await supabase
           .from("profiles")
           .select("*")
           .eq("active_couple_id", couple.id)
           .order("created_at", { ascending: true })
-      ).data ?? [profile]
+      ).data ??
+      [profile]
     : [profile];
 
   const partner = members.find((member) => member.id !== profile.id) ?? null;

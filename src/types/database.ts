@@ -412,13 +412,19 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
-      get_active_couple_id: {
-        Args: {
-          user_id_input?: string;
+        get_active_couple_id: {
+          Args: {
+            user_id_input?: string;
+          };
+          Returns: string | null;
         };
-        Returns: string | null;
+        get_space_members: {
+          Args: {
+            user_id_input?: string;
+          };
+          Returns: Database["public"]["Tables"]["profiles"]["Row"][];
+        };
       };
-    };
     CompositeTypes: Record<string, never>;
   };
 };
