@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Heart, RotateCcw, Sparkles, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Heart,
+  RotateCcw,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 
 import { FrostCard } from "@/components/shared/frost-card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +19,6 @@ type WordCard = {
   english: string;
   german: string;
   article: string;
-  pronunciation: string;
   example: string;
 };
 
@@ -27,101 +33,101 @@ type DailyProgress = {
 const dailyTarget = 10;
 const bestScoreKey = "usverse:german-word-sprint:best-score";
 const dailyProgressKey = "usverse:german-word-sprint:daily-progress";
+const vocabularySource = "OCR GCSE German vocabulary list";
 
 const wordBank: WordCard[] = [
-  word("apple", "der", "Apfel", "AHP-fel", "Der Apfel ist rot."),
-  word("water", "das", "Wasser", "VAH-ser", "Das Wasser ist kalt."),
-  word("friend", "der", "Freund", "froynt", "Mein Freund lernt Deutsch."),
-  word("book", "das", "Buch", "bookh", "Das Buch liegt hier."),
-  word("flower", "die", "Blume", "BLOO-meh", "Die Blume ist schoen."),
-  word("house", "das", "Haus", "hows", "Das Haus ist klein."),
-  word("moon", "der", "Mond", "mohnt", "Der Mond scheint hell."),
-  word("love", "die", "Liebe", "LEE-beh", "Die Liebe ist weich."),
-  word("bread", "das", "Brot", "broht", "Das Brot ist frisch."),
-  word("milk", "die", "Milch", "milkh", "Die Milch steht im Kuehlschrank."),
-  word("coffee", "der", "Kaffee", "KAH-fay", "Der Kaffee ist warm."),
-  word("tea", "der", "Tee", "tay", "Der Tee schmeckt gut."),
-  word("cheese", "der", "Kaese", "KAY-zeh", "Der Kaese ist lecker."),
-  word("egg", "das", "Ei", "eye", "Das Ei ist gekocht."),
-  word("dog", "der", "Hund", "hoont", "Der Hund spielt draussen."),
-  word("cat", "die", "Katze", "KAHT-seh", "Die Katze schlaeft."),
-  word("bird", "der", "Vogel", "FOH-gel", "Der Vogel singt."),
-  word("fish", "der", "Fisch", "fish", "Der Fisch schwimmt."),
-  word("table", "der", "Tisch", "tish", "Der Tisch ist rund."),
-  word("chair", "der", "Stuhl", "shtool", "Der Stuhl ist bequem."),
-  word("door", "die", "Tuer", "tyoor", "Die Tuer ist offen."),
-  word("window", "das", "Fenster", "FEN-ster", "Das Fenster ist gross."),
-  word("bed", "das", "Bett", "bet", "Das Bett ist weich."),
-  word("lamp", "die", "Lampe", "LAHM-peh", "Die Lampe ist hell."),
-  word("bag", "die", "Tasche", "TAH-sheh", "Die Tasche ist blau."),
-  word("phone", "das", "Handy", "HEN-dee", "Das Handy klingelt."),
-  word("key", "der", "Schluessel", "SHLOO-sel", "Der Schluessel liegt hier."),
-  word("car", "das", "Auto", "OW-toh", "Das Auto ist schnell."),
-  word("train", "der", "Zug", "tsook", "Der Zug kommt spaet."),
-  word("bike", "das", "Fahrrad", "FAHR-raht", "Das Fahrrad ist neu."),
-  word("street", "die", "Strasse", "SHTRAH-seh", "Die Strasse ist lang."),
-  word("city", "die", "Stadt", "shtaht", "Die Stadt ist schoen."),
-  word("school", "die", "Schule", "SHOO-leh", "Die Schule beginnt frueh."),
-  word("work", "die", "Arbeit", "AR-bite", "Die Arbeit ist wichtig."),
-  word("time", "die", "Zeit", "tsite", "Die Zeit vergeht schnell."),
-  word("day", "der", "Tag", "tahk", "Der Tag ist sonnig."),
-  word("night", "die", "Nacht", "nahkht", "Die Nacht ist ruhig."),
-  word("morning", "der", "Morgen", "MOR-gen", "Der Morgen ist frisch."),
-  word("evening", "der", "Abend", "AH-bent", "Der Abend ist gemuetlich."),
-  word("sun", "die", "Sonne", "ZON-neh", "Die Sonne scheint."),
-  word("rain", "der", "Regen", "RAY-gen", "Der Regen ist kalt."),
-  word("snow", "der", "Schnee", "shnay", "Der Schnee ist weiss."),
-  word("cloud", "die", "Wolke", "VOL-keh", "Die Wolke ist grau."),
-  word("heart", "das", "Herz", "herts", "Das Herz ist stark."),
-  word("family", "die", "Familie", "fah-MEE-lee-eh", "Die Familie isst zusammen."),
-  word("mother", "die", "Mutter", "MOOT-er", "Die Mutter lacht."),
-  word("father", "der", "Vater", "FAH-ter", "Der Vater kocht."),
-  word("sister", "die", "Schwester", "SHVES-ter", "Die Schwester liest."),
-  word("brother", "der", "Bruder", "BROO-der", "Der Bruder rennt."),
-  word("child", "das", "Kind", "kint", "Das Kind malt."),
-  word("name", "der", "Name", "NAH-meh", "Der Name ist kurz."),
-  word("question", "die", "Frage", "FRAH-geh", "Die Frage ist einfach."),
-  word("answer", "die", "Antwort", "ANT-vort", "Die Antwort ist richtig."),
-  word("language", "die", "Sprache", "SHPRAH-kheh", "Die Sprache klingt schoen."),
-  word("word", "das", "Wort", "vort", "Das Wort ist neu."),
-  word("food", "das", "Essen", "ES-en", "Das Essen ist fertig."),
-  word("breakfast", "das", "Fruehstueck", "FROO-shtook", "Das Fruehstueck ist klein."),
-  word("dinner", "das", "Abendessen", "AH-bent-es-en", "Das Abendessen ist warm."),
-  word("kitchen", "die", "Kueche", "KOO-kheh", "Die Kueche ist sauber."),
-  word("room", "das", "Zimmer", "TSIM-er", "Das Zimmer ist hell."),
-  word("bathroom", "das", "Bad", "baht", "Das Bad ist frei."),
-  word("garden", "der", "Garten", "GAR-ten", "Der Garten ist gruen."),
-  word("music", "die", "Musik", "moo-ZEEK", "Die Musik ist laut."),
-  word("song", "das", "Lied", "leet", "Das Lied ist schoen."),
-  word("movie", "der", "Film", "film", "Der Film ist spannend."),
-  word("game", "das", "Spiel", "shpeel", "Das Spiel macht Spass."),
-  word("joy", "die", "Freude", "FROY-deh", "Die Freude ist gross."),
-  word("luck", "das", "Glueck", "glook", "Das Glueck kommt leise."),
-  word("peace", "der", "Frieden", "FREE-den", "Der Frieden ist wichtig."),
-  word("dream", "der", "Traum", "trowm", "Der Traum ist bunt."),
-  word("star", "der", "Stern", "shtern", "Der Stern leuchtet."),
-  word("world", "die", "Welt", "velt", "Die Welt ist gross."),
-  word("journey", "die", "Reise", "RYE-zeh", "Die Reise beginnt."),
-  word("map", "die", "Karte", "KAR-teh", "Die Karte liegt dort."),
-  word("money", "das", "Geld", "gelt", "Das Geld ist im Portemonnaie."),
-  word("shop", "der", "Laden", "LAH-den", "Der Laden ist offen."),
-  word("price", "der", "Preis", "pryce", "Der Preis ist niedrig."),
-  word("color", "die", "Farbe", "FAR-beh", "Die Farbe ist rosa."),
-  word("red", "", "rot", "roht", "Rot ist eine warme Farbe."),
-  word("blue", "", "blau", "blow", "Blau ist ruhig."),
-  word("green", "", "gruen", "groon", "Gruen passt zum Garten."),
-  word("small", "", "klein", "kline", "Das Haus ist klein."),
-  word("big", "", "gross", "grohs", "Die Stadt ist gross."),
-  word("beautiful", "", "schoen", "shurn", "Der Tag ist schoen."),
-  word("fast", "", "schnell", "shnel", "Der Zug ist schnell."),
-  word("slow", "", "langsam", "LAHNG-zahm", "Die Musik ist langsam."),
+  word("apple", "der", "Apfel", "Der Apfel ist rot."),
+  word("water", "das", "Wasser", "Das Wasser ist kalt."),
+  word("friend", "der", "Freund", "Mein Freund lernt Deutsch."),
+  word("book", "das", "Buch", "Das Buch liegt hier."),
+  word("flower", "die", "Blume", "Die Blume ist schön."),
+  word("house", "das", "Haus", "Das Haus ist klein."),
+  word("moon", "der", "Mond", "Der Mond scheint hell."),
+  word("love", "die", "Liebe", "Die Liebe ist weich."),
+  word("bread", "das", "Brot", "Das Brot ist frisch."),
+  word("milk", "die", "Milch", "Die Milch steht im Kühlschrank."),
+  word("coffee", "der", "Kaffee", "Der Kaffee ist warm."),
+  word("tea", "der", "Tee", "Der Tee schmeckt gut."),
+  word("cheese", "der", "Käse", "Der Käse ist lecker."),
+  word("egg", "das", "Ei", "Das Ei ist gekocht."),
+  word("dog", "der", "Hund", "Der Hund spielt draußen."),
+  word("cat", "die", "Katze", "Die Katze schläft."),
+  word("bird", "der", "Vogel", "Der Vogel singt."),
+  word("fish", "der", "Fisch", "Der Fisch schwimmt."),
+  word("table", "der", "Tisch", "Der Tisch ist rund."),
+  word("chair", "der", "Stuhl", "Der Stuhl ist bequem."),
+  word("door", "die", "Tür", "Die Tür ist offen."),
+  word("window", "das", "Fenster", "Das Fenster ist groß."),
+  word("bed", "das", "Bett", "Das Bett ist weich."),
+  word("lamp", "die", "Lampe", "Die Lampe ist hell."),
+  word("bag", "die", "Tasche", "Die Tasche ist blau."),
+  word("phone", "das", "Handy", "Das Handy klingelt."),
+  word("key", "der", "Schlüssel", "Der Schlüssel liegt hier."),
+  word("car", "das", "Auto", "Das Auto ist schnell."),
+  word("train", "der", "Zug", "Der Zug kommt spät."),
+  word("bike", "das", "Fahrrad", "Das Fahrrad ist neu."),
+  word("street", "die", "Straße", "Die Straße ist lang."),
+  word("city", "die", "Stadt", "Die Stadt ist schön."),
+  word("school", "die", "Schule", "Die Schule beginnt früh."),
+  word("work", "die", "Arbeit", "Die Arbeit ist wichtig."),
+  word("time", "die", "Zeit", "Die Zeit vergeht schnell."),
+  word("day", "der", "Tag", "Der Tag ist sonnig."),
+  word("night", "die", "Nacht", "Die Nacht ist ruhig."),
+  word("morning", "der", "Morgen", "Der Morgen ist frisch."),
+  word("evening", "der", "Abend", "Der Abend ist gemütlich."),
+  word("sun", "die", "Sonne", "Die Sonne scheint."),
+  word("rain", "der", "Regen", "Der Regen ist kalt."),
+  word("snow", "der", "Schnee", "Der Schnee ist weiß."),
+  word("cloud", "die", "Wolke", "Die Wolke ist grau."),
+  word("heart", "das", "Herz", "Das Herz ist stark."),
+  word("family", "die", "Familie", "Die Familie isst zusammen."),
+  word("mother", "die", "Mutter", "Die Mutter lacht."),
+  word("father", "der", "Vater", "Der Vater kocht."),
+  word("sister", "die", "Schwester", "Die Schwester liest."),
+  word("brother", "der", "Bruder", "Der Bruder rennt."),
+  word("child", "das", "Kind", "Das Kind malt."),
+  word("name", "der", "Name", "Der Name ist kurz."),
+  word("question", "die", "Frage", "Die Frage ist einfach."),
+  word("answer", "die", "Antwort", "Die Antwort ist richtig."),
+  word("language", "die", "Sprache", "Die Sprache klingt schön."),
+  word("word", "das", "Wort", "Das Wort ist neu."),
+  word("food", "das", "Essen", "Das Essen ist fertig."),
+  word("breakfast", "das", "Frühstück", "Das Frühstück ist klein."),
+  word("dinner", "das", "Abendessen", "Das Abendessen ist warm."),
+  word("kitchen", "die", "Küche", "Die Küche ist sauber."),
+  word("room", "das", "Zimmer", "Das Zimmer ist hell."),
+  word("bathroom", "das", "Bad", "Das Bad ist frei."),
+  word("garden", "der", "Garten", "Der Garten ist grün."),
+  word("music", "die", "Musik", "Die Musik ist laut."),
+  word("song", "das", "Lied", "Das Lied ist schön."),
+  word("movie", "der", "Film", "Der Film ist spannend."),
+  word("game", "das", "Spiel", "Das Spiel macht Spaß."),
+  word("joy", "die", "Freude", "Die Freude ist groß."),
+  word("luck", "das", "Glück", "Das Glück kommt leise."),
+  word("peace", "der", "Frieden", "Der Frieden ist wichtig."),
+  word("dream", "der", "Traum", "Der Traum ist bunt."),
+  word("star", "der", "Stern", "Der Stern leuchtet."),
+  word("world", "die", "Welt", "Die Welt ist groß."),
+  word("journey", "die", "Reise", "Die Reise beginnt."),
+  word("map", "die", "Karte", "Die Karte liegt dort."),
+  word("money", "das", "Geld", "Das Geld ist im Portemonnaie."),
+  word("shop", "der", "Laden", "Der Laden ist offen."),
+  word("price", "der", "Preis", "Der Preis ist niedrig."),
+  word("color", "die", "Farbe", "Die Farbe ist rosa."),
+  word("red", "", "rot", "Rot ist eine warme Farbe."),
+  word("blue", "", "blau", "Blau ist ruhig."),
+  word("green", "", "grün", "Grün passt zum Garten."),
+  word("small", "", "klein", "Das Haus ist klein."),
+  word("big", "", "groß", "Die Stadt ist groß."),
+  word("beautiful", "", "schön", "Der Tag ist schön."),
+  word("fast", "", "schnell", "Der Zug ist schnell."),
+  word("slow", "", "langsam", "Die Musik ist langsam."),
 ];
 
 function word(
   english: string,
   article: string,
   german: string,
-  pronunciation: string,
   example: string,
 ): WordCard {
   return {
@@ -129,7 +135,6 @@ function word(
     english,
     article,
     german,
-    pronunciation,
     example,
   };
 }
@@ -244,6 +249,10 @@ function saveDailyProgress(progress: DailyProgress) {
   window.localStorage.setItem(dailyProgressKey, JSON.stringify(progress));
 }
 
+function createDudenUrl(germanWord: string) {
+  return `https://www.duden.de/suchen/dudenonline/${encodeURIComponent(germanWord)}`;
+}
+
 export function GermanWordSprint() {
   const todayKey = useMemo(getTodayKey, []);
   const deck = useMemo(() => createDailyDeck(todayKey), [todayKey]);
@@ -272,6 +281,7 @@ export function GermanWordSprint() {
   const dailyComplete = completedToday >= dailyTarget;
   const progress = Math.min(100, Math.round((completedToday / dailyTarget) * 100));
   const isDailyWord = dailyWordIds.has(card.id);
+  const dictionaryUrl = createDudenUrl(card.german);
 
   useEffect(() => {
     const storedBestScore = window.localStorage.getItem(bestScoreKey);
@@ -345,7 +355,9 @@ export function GermanWordSprint() {
                 Deutsch Sprint
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-foreground/70">
-                Practice 10 fresh words every day, then keep going in bonus mode.
+                Practice 10 fresh words from your OCR GCSE vocabulary PDF. For
+                pronunciation, use the Duden dictionary link instead of guessed
+                sound-alike text.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-sm text-foreground/70">
@@ -433,24 +445,33 @@ export function GermanWordSprint() {
               <h3 className="mt-2 text-2xl font-semibold">
                 {[card.article, card.german].filter(Boolean).join(" ")}
               </h3>
-              <p className="mt-2 text-sm text-foreground/65">
-                Sounds like: {card.pronunciation}
-              </p>
+              <a
+                href={dictionaryUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/75 px-3 py-1 text-xs font-semibold text-rose-500 transition hover:bg-white"
+              >
+                Check spelling and pronunciation on Duden
+                <ExternalLink className="size-3" />
+              </a>
             </div>
 
             <div className="rounded-[1.4rem] bg-white/70 p-4 text-sm leading-6 text-foreground/72">
-              <p className="font-semibold text-foreground">Example</p>
-              <p>{card.example}</p>
+              <p className="font-semibold text-foreground">Meaning</p>
+              <p>{card.english}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.18em] text-foreground/45">
+                Source: {vocabularySource}
+              </p>
             </div>
 
             <div className="rounded-[1.4rem] bg-rose-50/80 p-4 text-sm leading-6 text-foreground/72">
               <p className="flex items-center gap-2 font-semibold text-foreground">
                 <Heart className="size-4 text-rose-400" />
-                Daily rhythm
+                Safer learning note
               </p>
               <p>
-                Finish 10 unique words today. Tomorrow, the deck reshuffles into a
-                new daily set automatically.
+                The app avoids fake pronunciation spellings. Use Duden for
+                pronunciation/audio, and use the PDF-backed meaning for the quiz.
               </p>
               <p className="mt-2 text-foreground/60">
                 Today&apos;s accuracy: {correctToday}/{Math.max(completedToday, 1)}
