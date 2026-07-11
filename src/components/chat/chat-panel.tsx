@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { LoaderCircle, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCouplePresence } from "@/hooks/use-couple-presence";
+import { useProfileLookup } from "@/hooks/use-profile-lookup";
 import { useRealtimeRefresh } from "@/hooks/use-realtime-refresh";
 import { useOptionalSupabase } from "@/hooks/use-supabase";
 import { hasSupabaseConfig } from "@/lib/env";
@@ -227,6 +228,30 @@ export function ChatPanel({
     supabase,
   ]);
 
+  const visibleMessages = compact ? liveMessages.slice(-6) : liveMessages;
+  const referencedProfileIds = useMemo(
+    () => [
+      profile.id,
+      ...members.map((member) => member.id),
+      ...liveMessages.map((message) => message.sender_id),
+      ...liveMessages.flatMap((message) => message.read_by),
+    ],
+    [liveMessages, members, profile.id],
+  );
+  const knownProfiles = useMemo(() => [profile, ...members], [members, profile]);
+  const memberMap = useProfileLookup(knownProfiles, referencedProfileIds);
+  const resolvedMembers = useMemo(
+    () => Array.from(memberMap.values()),
+    [memberMap],
+  );
+  const otherMembers = resolvedMembers.filter((member) => member.id !== profile.id);
+  const onlineOtherMembers = otherMembers.filter((member) =>
+    onlineUserIds.includes(member.id),
+  );
+  const typingMembers = otherMembers.filter((member) =>
+    typingUserIds.includes(member.id),
+  );
+
   if (!couple) {
     return (
       <FrostCard>
@@ -238,15 +263,6 @@ export function ChatPanel({
     );
   }
 
-  const visibleMessages = compact ? liveMessages.slice(-6) : liveMessages;
-  const otherMembers = members.filter((member) => member.id !== profile.id);
-  const onlineOtherMembers = otherMembers.filter((member) =>
-    onlineUserIds.includes(member.id),
-  );
-  const typingMembers = otherMembers.filter((member) =>
-    typingUserIds.includes(member.id),
-  );
-  const memberMap = new Map(members.map((member) => [member.id, member]));
   const headerTitle =
     otherMembers.length === 1
       ? otherMembers[0].nickname

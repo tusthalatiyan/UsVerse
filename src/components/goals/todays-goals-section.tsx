@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { FrostCard } from "@/components/shared/frost-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useProfileLookup } from "@/hooks/use-profile-lookup";
 import { useRealtimeRefresh } from "@/hooks/use-realtime-refresh";
 import { useOptionalSupabase } from "@/hooks/use-supabase";
 import { formatTimestamp } from "@/lib/formatters";
@@ -73,16 +74,33 @@ export function TodaysGoalsSection({
     filter: coupleId ? `couple_id=eq.${coupleId}` : undefined,
   });
 
-  const memberNameById = useMemo(
-    () => new Map(members.map((member) => [member.id, member.nickname])),
-    [members],
-  );
-
   const todayGoalDate = getTodayGoalDate();
   const todaysGoals = useMemo(
     () => liveGoals.filter((goal) => goal.goal_date === todayGoalDate),
     [liveGoals, todayGoalDate],
   );
+  const referencedProfileIds = useMemo(
+    () => [
+      profile.id,
+      ...members.map((member) => member.id),
+      ...todaysGoals.map((goal) => goal.created_by),
+      ...todaysGoals
+        .map((goal) => goal.completed_by)
+        .filter((profileId): profileId is string => Boolean(profileId)),
+    ],
+    [members, profile.id, todaysGoals],
+  );
+  const knownProfiles = useMemo(() => [profile, ...members], [members, profile]);
+  const memberMap = useProfileLookup(knownProfiles, referencedProfileIds);
+  const memberNameById = useMemo(() => {
+    const names = new Map<string, string>();
+
+    memberMap.forEach((member) => {
+      names.set(member.id, member.nickname);
+    });
+
+    return names;
+  }, [memberMap]);
   const activeGoals = todaysGoals
     .filter((goal) => !goal.completed_at)
     .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
