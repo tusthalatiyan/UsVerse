@@ -60,6 +60,10 @@ export function toErrorMessage(error: PostgrestError | Error | null | unknown) {
       return "Could not reach Supabase. Check your internet connection and Supabase settings, then try again.";
     }
 
+    if (error.message.includes("Invite code not found or already used")) {
+      return "Invite code not found. Make sure the code is correct, then try again.";
+    }
+
     return error.message || "Something went sideways. Please try again.";
   }
 
@@ -70,6 +74,10 @@ export function toErrorMessage(error: PostgrestError | Error | null | unknown) {
   ) {
     if (isEmailRateLimitError(error)) {
       return "Supabase is limiting auth emails right now. Please wait a few minutes before trying again.";
+    }
+
+    if (error.message.includes("Invite code not found or already used")) {
+      return "Invite code not found. Make sure the code is correct, then try again.";
     }
 
     return error.message;
